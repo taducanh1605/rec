@@ -13,9 +13,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            height: 99vh;
             background-color: bisque;
-            max-height: 99vh;
+            word-break:break-all;
+            max-width: 99vw;
+            flex-direction: column;
         }
 
         .butStop {
@@ -74,11 +76,26 @@
         .recording {
             background-color: red;
         }
+
+        .volThres {
+            padding-block: 20vh;
+            width: 99vw;
+            text-align: center;
+        }
+        .volThres input {
+            display: flex;
+            width: 70%;
+            margin: auto;
+        }
     </style>
 </head>
 
 <body>
-    <div id="start-button" class="butStart" onclick="handleButStart(this)"></div>
+    <div class="volThres" style="display: block;">
+        <input type="range" id="volThres" min="1" max="30" value="15" step="1">
+        <br/>
+    </div>
+    <div id="start-button" class="butStart" onclick="handleButStart(this)" style="display: block; clear: both;"></div>
     <!-- <div id="stop-button">REPEAT</div> -->
     <script>
         window.flagS = 0;
@@ -96,8 +113,12 @@
                 // [2023-04-10-DA] tạo buffer
                 window.bufferSize = 2048;
                 window.thresholdStop = 0.5;
-                window.thresholdStart = 20;
+                var slider = document.getElementById("volThres");
+                window.thresholdStart = slider.value;
+                slider.oninput = function () {window.thresholdStart = this.value};
                 window.buffer = new Uint8Array(bufferSize);
+
+                
 
                 window.source.connect(analyser);
 
@@ -152,7 +173,7 @@
                 window.count++;
             else
                 window.count = 0;
-            window.aS = setTimeout(autoStop, 70);
+            window.aS = setTimeout(autoStop, 50);
         }
 
         // [2023-04-10-DA] autoStart
