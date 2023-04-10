@@ -15,6 +15,7 @@
             align-items: center;
             height: 100vh;
             background-color: bisque;
+            max-height: 99vh;
         }
 
         .butStop {
@@ -24,7 +25,7 @@
             width: 150px;
             height: 150px;
             border-radius: 50%;
-            background-color: red;
+            background-color: rgba(0, 195, 255, 0.855);
             color: white;
             font-size: 2em;
             cursor: pointer;
@@ -43,6 +44,7 @@
             height: 150px;
             cursor: pointer;
             transition: transform 0.2s ease-in-out;
+            background-color: transparent !important;
         }
 
         .butStart::before,
@@ -67,6 +69,10 @@
 
         .butStart:hover {
             transform: scale(1.1);
+        }
+
+        .recording {
+            background-color: red;
         }
     </style>
 </head>
@@ -151,10 +157,13 @@
 
         // [2023-04-10-DA] autoStart
         autoStart = function () {
+            var butS = document.getElementById("start-button");
+            butS.classList.remove("recording");
             window.analyser.getByteFrequencyData(window.buffer);
             var volume = window.buffer.reduce((acc, val) => acc + val, 0) / bufferSize;
             if (volume > window.thresholdStart) {
                 if (window.aSt) clearTimeout(window.aSt);
+                butS.classList.add("recording");
                 startRecording();
             } else
                 window.aSt = setTimeout(autoStart, 5);
