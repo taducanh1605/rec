@@ -15,12 +15,12 @@
             align-items: center;
             height: 99vh;
             background-color: bisque;
-            word-break:break-all;
+            word-break: break-all;
             max-width: 99vw;
             flex-direction: column;
         }
 
-        .butStop {
+        .butStart {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -35,11 +35,11 @@
             transition: transform 0.2s ease-in-out;
         }
 
-        .butStop:hover {
+        .butStart:hover {
             transform: scale(1.1);
         }
 
-        .butStart {
+        .butStop {
             position: relative;
             display: inline-block;
             width: 150px;
@@ -49,8 +49,8 @@
             background-color: transparent !important;
         }
 
-        .butStart::before,
-        .butStart::after {
+        .butStop::before,
+        .butStop::after {
             content: "";
             position: absolute;
             width: 37px;
@@ -61,15 +61,15 @@
             background-color: rgb(222, 91, 91);
         }
 
-        .butStart::before {
+        .butStop::before {
             transform: translate(-50%, -50%) rotate(45deg);
         }
 
-        .butStart::after {
+        .butStop::after {
             transform: translate(-50%, -50%) rotate(-45deg);
         }
 
-        .butStart:hover {
+        .butStop:hover {
             transform: scale(1.1);
         }
 
@@ -82,6 +82,7 @@
             width: 99vw;
             text-align: center;
         }
+
         .volThres input {
             display: flex;
             width: 70%;
@@ -93,12 +94,13 @@
 <body>
     <div class="volThres" style="display: block;">
         <input type="range" id="volThres" min="1" max="30" value="15" step="1">
-        <br/>
+        <br />
     </div>
     <div id="start-button" class="butStart" onclick="handleButStart(this)" style="display: block; clear: both;"></div>
     <!-- <div id="stop-button">REPEAT</div> -->
     <script>
         window.flagS = 0;
+        window.butS = document.getElementById("start-button");
 
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
@@ -115,12 +117,9 @@
                 window.thresholdStop = 0.5;
                 var slider = document.getElementById("volThres");
                 window.thresholdStart = slider.value;
-                slider.oninput = function () {window.thresholdStart = this.value};
+                slider.oninput = function () { window.thresholdStart = +(this.value) };
                 window.buffer = new Uint8Array(bufferSize);
-
-                
-
-                window.source.connect(analyser);
+                window.source.connect(window.analyser);
 
                 // lưu các phân đoạn âm thanh được ghi lại
                 window.mediaRecorder.addEventListener("dataavailable", event => { window.audioChunks.push(event.data); });
@@ -130,16 +129,14 @@
                     let audioBlob = new Blob(window.audioChunks, { type: "audio/wav" });
                     let audioUrl = URL.createObjectURL(audioBlob);
                     window.audio = new Audio(audioUrl);
-                    window.audio.addEventListener("ended", () => {
-                        handleButStart(document.getElementById("start-button"));
-                    });
+                    window.audio.addEventListener("ended", () => { handleButStart(window.audio) });
                     window.audio.play();
                 });
 
-                handleButStart(document.getElementById("start-button"));
+                autoStart();
             });
 
-        // bắt đầu ghi âm
+        // [2023-04-16-DA] start record
         startRecording = function () {
             delete window.audio;
             window.audioChunks = [];
@@ -148,23 +145,18 @@
             window.aS = setTimeout(autoStop, 1000);
         }
 
-        // dừng ghi âm khi người dùng nhấn vào nút dừng ghi âm
+        // [2023-04-16-DA] stop record and play audio
         stopRecording = function () {
-            window.flagS = 0;
-            var sBut = document.getElementById("start-button");
-            sBut.classList.remove("butStop");
-            sBut.classList.add("butStart");
-
             if (window.aSt) clearTimeout(window.aSt);
             if (window.aS) clearTimeout(window.aS);
-            if (!window.audio) window.mediaRecorder.stop();
-            else window.audio.play();
+            window.count = 0;
+            window.mediaRecorder.stop();
         }
 
         // [2023-04-10-DA] autoStop
         autoStop = function () {
             if (window.count > 10) {
-                stopRecording();
+                handleButStart(window.butS);
                 return;
             }
             window.analyser.getByteFrequencyData(window.buffer);
@@ -178,27 +170,38 @@
 
         // [2023-04-10-DA] autoStart
         autoStart = function () {
-            var butS = document.getElementById("start-button");
-            butS.classList.remove("recording");
+            if (window.audio && !window?.audio?.paused) window.audio.pause();
             window.analyser.getByteFrequencyData(window.buffer);
             var volume = window.buffer.reduce((acc, val) => acc + val, 0) / bufferSize;
             if (volume > window.thresholdStart) {
-                if (window.aSt) clearTimeout(window.aSt);
-                butS.classList.add("recording");
-                startRecording();
+                handleButStart(window.butS);
             } else
                 window.aSt = setTimeout(autoStart, 5);
         }
 
+        // [2023-04-16-DA] handle state of START button
         handleButStart = function (that) {
-            window.flagS = (window.flagS > 0) ? 0 : 1;
+            switch (window.flagS) {
+                case 0:
+                    if (window.aSt) clearTimeout(window.aSt);
+                    window.butS.classList.add("recording");
+                    window.analyser.getByteFrequencyData(window.buffer);
+                    startRecording();
+                    break;
+                case 1:
+                    window.butS.classList.remove("butStart");
+                    window.butS.classList.add("butStop");
+                    stopRecording();
+                    break;
+                case 2:
+                    window.butS.classList.remove("recording");
+                    window.butS.classList.remove("butStop");
+                    window.butS.classList.add("butStart");
+                    autoStart();
+                    break;
+            }
 
-            if (window.flagS > 0) {
-                that.classList.remove("butStart");
-                that.classList.add("butStop");
-                autoStart();
-            } else
-                stopRecording();
+            window.flagS = (window.flagS > 1) ? 0 : (window.flagS + 1);
         }
     </script>
 </body>
