@@ -97,22 +97,21 @@
         <br />
     </div>
     <div id="start-button" class="butStart" onclick="handleButStart(this)" style="display: block; clear: both;"></div>
-    <!-- <div id="stop-button">REPEAT</div> -->
     <script>
         window.flagS = 0;
         window.butS = document.getElementById("start-button");
 
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
-                // tạo một đối tượng MediaRecorder để ghi âm
+                // make object MediaRecorder
                 window.mediaRecorder = new MediaRecorder(stream);
 
-                // [2023-04-10-DA] tạo đối tượng phân tích
+                // [2023-04-10-DA] make analyse object
                 window.audioContext = new AudioContext();
                 window.source = audioContext.createMediaStreamSource(stream);
                 window.analyser = audioContext.createAnalyser();
 
-                // [2023-04-10-DA] tạo buffer
+                // [2023-04-10-DA] make buffer
                 window.bufferSize = 2048;
                 window.thresholdStop = 0.5;
                 var slider = document.getElementById("volThres");
@@ -121,10 +120,10 @@
                 window.buffer = new Uint8Array(bufferSize);
                 window.source.connect(window.analyser);
 
-                // lưu các phân đoạn âm thanh được ghi lại
+                // [2023-04-16-DA] save audio data
                 window.mediaRecorder.addEventListener("dataavailable", event => { window.audioChunks.push(event.data); });
 
-                // kết thúc ghi âm và lưu tệp WAV
+                // [2023-04-16-DA] finish, save and play file audio
                 window.mediaRecorder.addEventListener("stop", () => {
                     let audioBlob = new Blob(window.audioChunks, { type: "audio/wav" });
                     let audioUrl = URL.createObjectURL(audioBlob);
