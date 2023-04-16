@@ -85,7 +85,7 @@
 
         .volThres input {
             display: flex;
-            width: 70%;
+            width: 50%;
             margin: auto;
         }
     </style>
@@ -98,8 +98,12 @@
     </div>
     <div id="start-button" class="butStart" onclick="handleButStart(this)" style="display: block; clear: both;"></div>
     <script>
+        // [2023-04-16-DA] flagS -> state of START button
         window.flagS = 0;
+        // [2023-04-16-DA] element (object) of START button
         window.butS = document.getElementById("start-button");
+        // [2023-04-16-DA] element (object) of threshold slide
+        window.thres = document.getElementById("volThres");
 
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
@@ -114,8 +118,7 @@
                 // [2023-04-10-DA] make buffer
                 window.bufferSize = 2048;
                 window.thresholdStop = 0.5;
-                var slider = document.getElementById("volThres");
-                window.thresholdStart = slider.value;
+                window.thresholdStart = +(window.thres.value);
                 slider.oninput = function () { window.thresholdStart = +(this.value) };
                 window.buffer = new Uint8Array(bufferSize);
                 window.source.connect(window.analyser);
