@@ -119,7 +119,7 @@
                 window.bufferSize = 2048;
                 window.thresholdStop = 0.5;
                 window.thresholdStart = +(window.thres.value);
-                slider.oninput = function () { window.thresholdStart = +(this.value) };
+                window.thres.oninput = function () { window.thresholdStart = +(this.value) };
                 window.buffer = new Uint8Array(bufferSize);
                 window.source.connect(window.analyser);
 
